@@ -21,7 +21,6 @@ var nodeStatusCodes = require('node-status-codes');
 var parseJson = require('parse-json');
 var isRetryAllowed = require('is-retry-allowed');
 var pkg = require('./package.json');
-var fakeBuffer = require('buffer/').Buffer;
 
 function requestAsEventEmitter(opts) {
 	opts = opts || {};
@@ -45,13 +44,10 @@ function requestAsEventEmitter(opts) {
 					ee.emit('error', new got.MaxRedirectsError(statusCode, opts), null, res);
 					return;
 				}
+
+				delete(opts.headers);
 				
-				var bufferString = fakeBuffer.from(res.headers.location, 'binary').toString()
-				redirectUrl = urlLib.resolve(urlLib.format(opts), bufferString);
-				
-				// deleting headers on a redirect, this can trick Amazon S3
-				delete(opts.headers)
-				
+				redirectUrl = urlLib.resolve(urlLib.format(opts), res.headers.location);
 				var redirectOpts = objectAssign({}, opts, urlLib.parse(redirectUrl));
 
 				ee.emit('redirect', res, redirectOpts);
