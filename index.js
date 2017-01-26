@@ -21,6 +21,7 @@ var nodeStatusCodes = require('node-status-codes');
 var parseJson = require('parse-json');
 var isRetryAllowed = require('is-retry-allowed');
 var pkg = require('./package.json');
+var fakeBuffer = require('buffer/').Buffer;
 
 function requestAsEventEmitter(opts) {
 	opts = opts || {};
@@ -44,8 +45,10 @@ function requestAsEventEmitter(opts) {
 					ee.emit('error', new got.MaxRedirectsError(statusCode, opts), null, res);
 					return;
 				}
-
-				redirectUrl = urlLib.resolve(urlLib.format(opts), res.headers.location);
+				
+				var bufferString = fakeBuffer.from(res.headers.location, 'binary').toString()
+				redirectUrl = urlLib.resolve(urlLib.format(opts), bufferString);
+				
 				var redirectOpts = objectAssign({}, opts, urlLib.parse(redirectUrl));
 
 				ee.emit('redirect', res, redirectOpts);
@@ -228,10 +231,11 @@ function normalizeArguments(url, opts) {
 		opts
 	);
 
-	opts.headers = objectAssign({
-		'user-agent': pkg.name + '/' + pkg.version + ' (https://github.com/sindresorhus/got)',
-		'accept-encoding': 'gzip,deflate'
-	}, lowercaseKeys(opts.headers));
+	// This doesn't work for every case
+	// opts.headers = objectAssign({
+	// 	'user-agent': pkg.name + '/' + pkg.version + ' (https://github.com/sindresorhus/got)',
+	// 	'accept-encoding': 'gzip,deflate'
+	// }, lowercaseKeys(opts.headers));
 
 	var query = opts.query;
 
