@@ -49,6 +49,9 @@ function requestAsEventEmitter(opts) {
 				var bufferString = fakeBuffer.from(res.headers.location, 'binary').toString()
 				redirectUrl = urlLib.resolve(urlLib.format(opts), bufferString);
 				
+				// deleting headers on a redirect, this can trick Amazon S3
+				delete(opts.headers)
+				
 				var redirectOpts = objectAssign({}, opts, urlLib.parse(redirectUrl));
 
 				ee.emit('redirect', res, redirectOpts);
